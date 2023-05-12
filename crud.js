@@ -1,5 +1,40 @@
 /*                                                  a ação     e o evento     */
 document.querySelector("#salvar").addEventListener("click", cadastrar)
+
+let tarefas=[]
+
+/*() => {} significad que vamo chamar a função que esat dentro das chaves */
+window.addEventListener("load", ()=>{
+    /*JSON.parse() transforma uma String em Objeto. Pois nós tinhamos transformado o Objeto em String */
+    tarefas=JSON.parse(localStorage.getItem("tarefas")) || []
+    atualizar()
+})
+
+document.querySelector("#busca").addEventListener("keyup", ()=>{
+    let busca =document.querySelector("#busca").value
+    let tarefasFiltradas=tarefas.filter((tarefa)=>{
+        return tarefa.titulo.toLowerCase().includes(busca.toLowerCase())
+    })
+    filtrar(tarefasFiltradas)
+})
+function filtrar(){
+    document.querySelector("#tarefas").innerHTML =""
+    tarefas.forEach((tarefa)=>{  
+        document.querySelector("#tarefas").innerHTML += createCard(tarefa)
+    })
+}
+
+function atualizar(){
+    document.querySelector("#tarefas").innerHTML =""
+    /*o setItem(1,2) o segundo parametro deve ser uma String 
+    O JSON.stringfy() vai meio que fazer o toString() do objeto vai meio que ler o objeto*/
+    /*                      chave  ,  valor */
+    localStorage.setItem("tarefas", JSON.stringify(tarefas))
+    tarefas.forEach((tarefa)=>{  
+        document.querySelector("#tarefas").innerHTML += createCard(tarefa)
+    })
+}
+
 function cadastrar(){
     /*Vai me devolver a caixa de texto Eu quero o que foi digitado no texto 
     const titulo = document.querySelector("#titulo")
@@ -15,15 +50,21 @@ function cadastrar(){
         /*Tava assim 
         titulo: titulo
         quando os nomes são iguais nós podemos só colocar o titulo*/
+        id: Date.now(),
         titulo: titulo,
         descricao: descricao,
-        categoria: categoria
+        categoria: categoria,
+        concluida: false
     }
+    
     
     if(!validar(tarefa.titulo, document.querySelector("#titulo"))) return
     if(!validar(tarefa.descricao, document.querySelector("#descricao"))) return
 
-    document.querySelector("#tarefas").innerHTML += createCard(tarefa)
+    /*Colocando a tarefa no array */
+    tarefas.push(tarefa)
+
+    atualizar()
     
     modal.hide()
 }
@@ -40,12 +81,27 @@ function validar(valor, campo){
     return true
 }
 
-function apagar(botao){
-    botao.parentNode.parentNode.parentNode.remove()
+function apagar(id){
+     tarefas = tarefas.filter((tarefa)=>{
+        return tarefa.id !=id
+    })
+    atualizar()
 }
+
+function concluir(id){
+    let tarefaEncontrada=tarefas.find((tarefa)=>{
+        return tarefa.id==id
+    })
+    tarefaEncontrada.concluida=true
+    atualizar()
+}
+
 /*ia ficar muito grande ficar passando todos os parametros por isso estamos passando um objeto tarfea
 function createCard(titulo,descricao,categoria) */
 function createCard(tarefa){
+    let disabled= tarefa.concluida ? "disabled" : ""
+
+
     return `
     <div class="col-lg-3 col-md-6 col-12">
         <div class="card">
@@ -58,12 +114,12 @@ function createCard(tarefa){
                 <p>
                     <span class="badge text-bg-danger">${tarefa.categoria}</span>
                     </p>
-                <a href="#" class="btn btn-success" title="Marcar como concluída">
+                <a onClick="concluir(${tarefa.id})" href="#" class="btn btn-success ${disabled}" title="Marcar como concluída">
                     <!--é o icone-->
                     <i class="bi bi-check"></i>
                 </a>
             
-                <a onClick="apagar(this)" href="#" class="btn btn-danger" title="Apagar tarefa">
+                <a onClick="apagar(${tarefa.id})" href="#" class="btn btn-danger" title="Apagar tarefa">
                     <!--é o icone-->
                     <i class="bi bi-trash3-fill"></i>
                 </a>
